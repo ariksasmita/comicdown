@@ -7,6 +7,8 @@ Built with Go + [Bubble Tea v2](https://charm.land/blog/v2/) for the TUI.
 ## Features
 
 - **Interactive TUI** — Browse and select chapters with keyboard navigation
+- **Search by title** — Find manga directly inside the TUI, no browser needed
+- **Multiple providers** — MangaDex now, MangaKakalot coming soon (auto-detected from URL)
 - **CLI headless mode** — Scriptable for automation and batch downloads
 - **Image optimization** — Resize and compress JPEGs with configurable quality
 - **CBZ packaging** — Standard ZIP with [ComicInfo.xml](https://github.com/anansi-project/comicinfo) metadata
@@ -30,11 +32,13 @@ go build ./cmd/comicdown/
 ./comicdown
 ```
 
-Navigates through 4 screens:
-1. **Input** — Paste a MangaDex URL, set language/quality/output
-2. **Chapters** — Select which chapters to download (space to toggle, `a` select all, `n` deselect all, type to filter)
-3. **Progress** — Live download/optimize/package progress with per-chapter bars
-4. **Summary** — Results with file sizes, open folder option
+Navigates through 6 screens:
+1. **Home** — Choose between pasting a URL or searching by title
+2. **Search** — Search manga by title across providers (TUI only)
+3. **Input** — Paste a MangaDex URL, set language/quality/output
+4. **Chapters** — Select which chapters to download (space to toggle, `a` select all, `n` deselect all, type to filter)
+5. **Progress** — Live download/optimize/package progress with per-chapter bars
+6. **Summary** — Results with file sizes, open folder option
 
 ### CLI / Headless
 
@@ -100,17 +104,13 @@ Manga Title - Ch.1 Chapter Title.cbz
 ## Architecture
 
 ```
-cmd/comicdown/
-  main.go        # CLI entry + flag parsing
-  server.go      # HTTP file server with mobile UI
-  fix.go         # --fix-names file rename utility
-
 internal/
-  mangadex/      # API client (manga, chapters, at-home image URLs)
+  provider/      # Provider interface + shared types (multi-source support)
+  mangadex/      # MangaDex API client (implements Provider)
   downloader/    # Concurrent image downloader with rate limiting + retry
   optimizer/     # JPEG resize + compress (disintegration/imaging)
   packager/      # CBZ (ZIP) + ComicInfo.xml generation
-  tui/           # Bubble Tea v2 screens (input, chapters, progress, summary)
+  tui/           # Bubble Tea v2 screens (home, search, results, input, chapters, progress, summary)
 ```
 
 ## Data Source

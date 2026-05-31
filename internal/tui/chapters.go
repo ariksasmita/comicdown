@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/sasmitai/comicdown/internal/mangadex"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -260,54 +259,6 @@ func (m ChaptersModel) countSelected() int {
 }
 
 // fetchChaptersCmd fetches manga + chapter list from MangaDex and returns a message.
-func fetchChaptersCmd(opts Opts) tea.Cmd {
-	return func() tea.Msg {
-		id, err := mangadex.ExtractMangaID(opts.URL)
-		if err != nil {
-			return chaptersLoadErrMsg{err: fmt.Errorf("invalid URL: %w", err)}
-		}
-
-		client := mangadex.NewClient()
-
-		manga, err := client.FetchManga(id)
-		if err != nil {
-			return chaptersLoadErrMsg{err: fmt.Errorf("fetch manga: %w", err)}
-		}
-
-		chapters, err := client.FetchAllChapters(id, opts.Lang)
-		if err != nil {
-			return chaptersLoadErrMsg{err: fmt.Errorf("fetch chapters: %w", err)}
-		}
-
-		if len(chapters) == 0 {
-			return chaptersLoadErrMsg{err: fmt.Errorf(
-				"no %s chapters found for this manga", opts.Lang,
-			)}
-		}
-
-		info := make([]chapterInfo, len(chapters))
-		for i, ch := range chapters {
-			info[i] = chapterInfo{
-				ID:                 ch.ID,
-				Volume:             ch.Volume,
-				Chapter:            ch.Chapter,
-				Title:              ch.Title,
-				TranslatedLanguage: ch.TranslatedLanguage,
-				Pages:              ch.Pages,
-			}
-		}
-
-		return chaptersLoadedMsg{
-			manga: mangaInfo{
-				Title: manga.Title,
-				Tags:  manga.Tags,
-				Year:  manga.Year,
-			},
-			chapters: info,
-		}
-	}
-}
-
 func min(a, b int) int {
 	if a < b {
 		return a

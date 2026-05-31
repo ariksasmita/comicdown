@@ -215,7 +215,7 @@ func (m ProgressModel) downloadChapter(index int) tea.Cmd {
 		ch := m.states[index].chapter
 		client := mangadex.NewClient()
 
-		pageURLs, err := client.FetchPageURLs(ch.ID)
+		pageURLs, err := client.FetchPageURLs(context.Background(), ch.ID)
 		if err != nil {
 			return chapterDoneMsg{index: index, err: fmt.Errorf("fetch page URLs: %w", err)}
 		}
