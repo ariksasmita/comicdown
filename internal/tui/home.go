@@ -91,10 +91,10 @@ func (m HomeModel) View() string {
 	for i, item := range m.items {
 		selected := i == m.cursor
 
-		// Cursor indicator on its own, before the card
-		cursor := "  "
+		// Cursor indicator (same width for both states)
+		cursor := "   " // 3 spaces
 		if selected {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render("▶")
+			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render("▶  ") // 3 chars total
 		}
 
 		borderColor := lipgloss.Color("#3C3C3C")
