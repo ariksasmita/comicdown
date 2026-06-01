@@ -37,9 +37,14 @@ func NewResultsModel(results []provider.SearchResult, query, prov string, width,
 }
 
 func (m *ResultsModel) calcVisible() {
-	m.visible = m.height - 8
-	if m.visible < 5 {
-		m.visible = 5
+	// Reserve space for: title bar (3 lines), filter line (2 if active, 0 otherwise), help bar (2 lines)
+	reserved := 5 // title + padding + help
+	if m.filter != "" {
+		reserved += 2 // filter line + padding
+	}
+	m.visible = m.height - reserved
+	if m.visible < 3 {
+		m.visible = 3
 	}
 }
 

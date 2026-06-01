@@ -45,6 +45,7 @@ type chapterDoneMsg struct {
 	cbzSize int64
 	err     error
 }
+
 type allDoneMsg struct{}
 
 func NewProgressModel(chapters []chapterInfo, opts Opts, width, height int, manga mangaInfo) ProgressModel {
@@ -155,13 +156,15 @@ func (m ProgressModel) View(width int) string {
 		}
 
 		icon := statusIcon(s.status)
-		bar := progressBar(s.progress, barWidth)
-		label := fmt.Sprintf("Ch.%-4s %-25s %dp",
+		label := fmt.Sprintf("Ch.%-4s %-30s %dp",
 			s.chapter.Chapter,
-			truncate(s.chapter.Title, 25),
+			truncate(s.chapter.Title, 30),
 			s.chapter.Pages,
 		)
-		row := fmt.Sprintf("    %s %s %s", icon, bar, label)
+		row := fmt.Sprintf("    %s %s", icon, label)
+		if s.status == "done" {
+			row += fmt.Sprintf(" • %s", formatBytes(s.cbzSize))
+		}
 		if s.status == "error" {
 			b.WriteString(errorStyle.Render(row))
 			b.WriteString("  " + dimStyle.Render(truncate(s.errMsg, 30)))
@@ -232,9 +235,6 @@ func (m ProgressModel) downloadChapter(index int) tea.Cmd {
 			downloader.Options{Workers: m.opts.Workers, RateLimit: 1},
 			nil,
 		)
-		if err != nil {
-			return chapterDoneMsg{index: index, err: fmt.Errorf("download: %w", err)}
-		}
 
 		optDir := filepath.Join(os.TempDir(), "comicdown", ch.ID+"_opt")
 		defer os.RemoveAll(optDir)
@@ -303,4 +303,17 @@ func progressBar(pct float64, width int) string {
 	pctStr := fmt.Sprintf("%3.0f%%", pct*100)
 	return lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render(filledStr) +
 		dimStyle.Render(emptyStr) + " " + pctStr
+}
+
+func formatBytes(b int64) string {
+	const unit = 1024
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
+	}
+	div, exp := int64(unit), 0
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "KMGTPE"[exp])
 }

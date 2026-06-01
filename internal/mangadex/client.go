@@ -225,9 +225,12 @@ func (c *Client) fetchChapterPage(ctx context.Context, mangaID, lang string, off
 	}
 
 	chapters := make([]provider.Chapter, 0, len(raw.Data))
-	for _, d := range raw.Data {
-		chapters = append(chapters, parseChapter(d))
-	}
+		// Filter out chapters with 0 pages (often corrupted/placeholder entries)
+		for _, d := range raw.Data {
+			if d.Attributes.Pages > 0 {
+				chapters = append(chapters, parseChapter(d))
+			}
+		}
 	return chapters, raw.Total, nil
 }
 
