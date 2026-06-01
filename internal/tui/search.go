@@ -129,9 +129,12 @@ func (m SearchModel) View() string {
 	if len(m.providers) > 1 {
 		arrows = "  ← → to change"
 	}
-	b.WriteString("    ")
-	b.WriteString(border.Render("  " + provValue + arrows + "  "))
-	b.WriteString("\n\n")
+	rendered := border.Render("  " + provValue + arrows + "  ")
+	lines := strings.Split(strings.TrimSuffix(rendered, "\n"), "\n")
+	for _, line := range lines {
+		b.WriteString("    " + line + "\n")
+	}
+	b.WriteString("\n")
 
 	// Text fields
 	for i, f := range m.fields {
@@ -146,9 +149,12 @@ func (m SearchModel) View() string {
 		}
 
 		b.WriteString("    " + f.label + "\n")
-		b.WriteString("    ")
-		b.WriteString(border.Render("  " + value + "▌")) // cursor indicator
-		b.WriteString("\n\n")
+		rendered := border.Render("  " + value + "▌") // cursor indicator
+		lines := strings.Split(strings.TrimSuffix(rendered, "\n"), "\n")
+		for _, line := range lines {
+			b.WriteString("    " + line + "\n")
+		}
+		b.WriteString("\n")
 	}
 
 	// Search button
