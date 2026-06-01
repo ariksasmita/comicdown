@@ -21,14 +21,15 @@ type searchField struct {
 	label       string
 	value       string
 	placeholder string
+	editable    bool // false = dropdown, true = free text
 }
 
 func NewSearchModel() SearchModel {
 	return SearchModel{
 		providers: []string{"MangaDex"},
 		fields: []searchField{
-			{label: "Title", placeholder: "e.g. One Piece"},
-			{label: "Language", value: "en", placeholder: "en"},
+			{label: "Title", placeholder: "e.g. One Piece", editable: true},
+			{label: "Language", value: "en", placeholder: "en", editable: true},
 		},
 	}
 }
@@ -50,10 +51,22 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 		case "shift+tab", "up":
 			m.focusIndex = (m.focusIndex - 1 + len(m.fields) + 1) % (len(m.fields) + 1)
 			return m, nil
+		case "left", "h":
+			if m.focusIndex == len(m.fields) {
+				// Cycle provider dropdown left
+				m.provider = (m.provider - 1 + len(m.providers)) % len(m.providers)
+			}
+			return m, nil
+		case "right", "l":
+			if m.focusIndex == len(m.fields) {
+				// Cycle provider dropdown right
+				m.provider = (m.provider + 1) % len(m.providers)
+			}
+			return m, nil
 		case "enter":
 			return m, m.submit()
 		case "backspace":
-			if m.focusIndex < len(m.fields) {
+			if m.focusIndex < len(m.fields) && m.fields[m.focusIndex].editable {
 				f := &m.fields[m.focusIndex]
 				if len(f.value) > 0 {
 					f.value = f.value[:len(f.value)-1]
@@ -64,7 +77,7 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 			return m, func() tea.Msg { return backToHomeMsg{} }
 		default:
 			if len(msg.String()) == 1 && msg.String()[0] >= 32 {
-				if m.focusIndex < len(m.fields) {
+				if m.focusIndex < len(m.fields) && m.fields[m.focusIndex].editable {
 					m.fields[m.focusIndex].value += msg.String()
 				}
 			}
@@ -72,7 +85,7 @@ func (m SearchModel) Update(msg tea.Msg) (SearchModel, tea.Cmd) {
 		}
 
 	case tea.PasteMsg:
-		if m.focusIndex < len(m.fields) {
+		if m.focusIndex < len(m.fields) && m.fields[m.focusIndex].editable {
 			pasted := strings.ReplaceAll(msg.Content, "\n", "")
 			m.fields[m.focusIndex].value += pasted
 		}
@@ -105,15 +118,19 @@ func (m SearchModel) View() string {
 	focusedBorder := lipgloss.NewStyle().Width(formWidth).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#7D56F4"))
 	normalBorder := lipgloss.NewStyle().Width(formWidth).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("#3C3C3C"))
 
-	// Provider selector
+	// Provider selector (dropdown)
 	border := normalBorder
 	if m.focusIndex == len(m.fields) {
 		border = focusedBorder
 	}
 	b.WriteString("    Provider\n")
 	provValue := m.providers[m.provider]
+	arrows := ""
+	if len(m.providers) > 1 {
+		arrows = "  ← → to change"
+	}
 	b.WriteString("    ")
-	b.WriteString(border.Render("  " + provValue + "  "))
+	b.WriteString(border.Render("  " + provValue + arrows + "  "))
 	b.WriteString("\n\n")
 
 	// Text fields
@@ -130,7 +147,7 @@ func (m SearchModel) View() string {
 
 		b.WriteString("    " + f.label + "\n")
 		b.WriteString("    ")
-		b.WriteString(border.Render("  " + value + "  "))
+		b.WriteString(border.Render("  " + value + "▌")) // cursor indicator
 		b.WriteString("\n\n")
 	}
 
@@ -149,7 +166,7 @@ func (m SearchModel) View() string {
 		Foreground(lipgloss.Color("#626262")).
 		Background(lipgloss.Color("#1A1A1A")).
 		Padding(0, 2).
-		Render("↑↓/Tab navigate • Enter search • Ctrl+V paste • Esc back • Ctrl+C quit")
+		Render("↑↓/Tab navigate • ← → change provider • type to edit fields • Enter search • Esc back • Ctrl+C quit")
 	b.WriteString(help)
 
 	return b.String()
