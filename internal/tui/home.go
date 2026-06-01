@@ -86,32 +86,40 @@ func (m HomeModel) View() string {
 	b.WriteString(lipgloss.NewStyle().Padding(0, 4).Render("How would you like to find a manga?"))
 	b.WriteString("\n\n")
 
+	cardWidth := min(w-12, 68)
+
 	for i, item := range m.items {
+		selected := i == m.cursor
+
+		// Cursor indicator on its own, before the card
 		cursor := "  "
-		if i == m.cursor {
-			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render("▶ ")
+		if selected {
+			cursor = lipgloss.NewStyle().Foreground(lipgloss.Color("#7D56F4")).Render("▶")
 		}
 
-		labelStyle := lipgloss.NewStyle().Bold(true).Width(w - 16)
+		borderColor := lipgloss.Color("#3C3C3C")
+		if selected {
+			borderColor = lipgloss.Color("#7D56F4")
+		}
+
+		cardStyle := lipgloss.NewStyle().
+			Width(cardWidth).
+			Padding(0, 2).
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(borderColor)
+
+		labelStyle := lipgloss.NewStyle().Bold(true)
 		descStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#626262"))
 
-		if i == m.cursor {
-			cardStyle := lipgloss.NewStyle().
-				Width(w - 8).
-				Padding(1, 2).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#7D56F4"))
-			card := fmt.Sprintf("%s %s\n   %s", item.icon, labelStyle.Render(item.label), descStyle.Render(item.description))
-			b.WriteString(lipgloss.NewStyle().Padding(0, 3).Render(cursor + cardStyle.Render(card)))
-		} else {
-			cardStyle := lipgloss.NewStyle().
-				Width(w - 8).
-				Padding(1, 2).
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("#3C3C3C"))
-			card := fmt.Sprintf("%s %s\n   %s", item.icon, labelStyle.Render(item.label), descStyle.Render(item.description))
-			b.WriteString(lipgloss.NewStyle().Padding(0, 3).Render(cursor + cardStyle.Render(card)))
-		}
+		card := fmt.Sprintf("%s %s\n   %s",
+			item.icon,
+			labelStyle.Render(item.label),
+			descStyle.Render(item.description),
+		)
+
+		// Render cursor and card side by side using lipgloss join
+		row := lipgloss.JoinHorizontal(lipgloss.Top, cursor, cardStyle.Render(card))
+		b.WriteString(lipgloss.NewStyle().Padding(0, 4).Render(row))
 		b.WriteString("\n")
 	}
 
