@@ -128,9 +128,11 @@ func (m InputModel) View() string {
 		b.WriteString("    ")
 		b.WriteString(labelStyle.Render(f.label))
 		b.WriteString("\n")
-		b.WriteString("    ")
-		b.WriteString(border.Render("  " + value + "  "))
-		b.WriteString("\n")
+		rendered := border.Render("  " + value + "  ")
+		lines := strings.Split(strings.TrimSuffix(rendered, "\n"), "\n")
+		for _, line := range lines {
+			b.WriteString("    " + line + "\n")
+		}
 	}
 
 	// ── Submit button ──
